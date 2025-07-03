@@ -17,12 +17,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
+      - name: Sync branch (fetch & reset)
+        run: |
+          git fetch origin master
+          git reset --hard origin/master
+
       - name: Read plugin file path from composer.json
         run: |
           NAME=$(jq -r '.name' composer.json)
           PLUGIN_NAME=${NAME#*/}
           PLUGIN_FILE="$PLUGIN_NAME.php"
           echo "PLUGIN_FILE=$PLUGIN_FILE" >> $GITHUB_ENV
+          echo "Plugin file path: $PLUGIN_FILE"
 
       - name: Update plugin version in PHP file
         run: |
@@ -46,13 +52,11 @@ jobs:
           for i in $(seq 1 $RETRIES); do
             echo "Attempt $i to push..."
 
-            git fetch origin master
-            git reset --hard origin/master
-
             git add "$PLUGIN_FILE"
 
             if git diff --cached --quiet; then
               echo "No changes to commit"
+              break
             else
               git commit -m "chore: Update plugin version to $TAG [skip ci]"
             fi
@@ -63,5 +67,7 @@ jobs:
             else
               echo "Push failed, retrying after 5 seconds..."
               sleep 5
+              git fetch origin master
+              git reset --hard origin/master
             fi
           done
