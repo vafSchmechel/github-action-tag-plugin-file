@@ -43,7 +43,7 @@ jobs:
           echo "After replacement:"
           head -n 10 "$PLUGIN_FILE"
 
-      - name: Commit and push changes with retry
+      - name: Commit and push changes with retry and update tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -63,6 +63,11 @@ jobs:
 
             if git push origin master; then
               echo "Push successful!"
+
+              echo "Updating tag $TAG to point to the latest commit..."
+              git tag -f "$TAG"
+              git push --force origin "$TAG"
+
               break
             else
               echo "Push failed, retrying after 5 seconds..."
