@@ -18,14 +18,19 @@ jobs:
       - name: Set plugin version in PHP file
         run: |
           TAG=${GITHUB_REF##*/}
-          FILE="my-plugin.php"
-          echo "Updating $FILE with version $TAG"
-          sed -i "s/^.*Version:.*$/ * Version: $TAG/" my-plugin.php
 
-      - name: Commit and push changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add my-plugin.php
-          git commit -m "chore: Update plugin version to $TAG [skip ci]" || echo "No changes to commit"
-          git push
+          echo "Git Tag: '$TAG'"
+
+          ESCAPED_TAG=$(printf '%s\n' "$TAG" | sed 's/[\/&]/\\&/g')
+          echo "Escaped Tag: '$ESCAPED_TAG'"
+
+          FILE="my-plugin.php"
+
+          echo "Before replacement:"
+          head -n 10 "$FILE"
+
+          sed -i "s/^\(\s*\*\s*Version:\s*\).*/\1$ESCAPED_TAG/" "$FILE"
+
+          echo "After replacement:"
+          head -n 10 "$FILE"
+      
