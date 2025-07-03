@@ -3,7 +3,7 @@ name: Update Plugin Version on Tag Push
 on:
   push:
     tags:
-      - '*'    # Jeder Tag löst die Action aus
+      - '*'
 
 jobs:
   update-version:
