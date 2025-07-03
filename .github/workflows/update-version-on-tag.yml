@@ -43,7 +43,7 @@ jobs:
           
           git commit -m "chore: Update plugin version to $TAG [skip ci]" || echo "No changes to commit"
           
-          git pull --rebase origin main
+          git pull --rebase origin master
           
-          git push origin HEAD:main
+          git push origin HEAD:master
       
