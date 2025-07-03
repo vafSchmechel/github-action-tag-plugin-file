@@ -43,30 +43,36 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          echo "=== GIT STATUS ==="
-          git status
+          git checkout master
           
-          echo "=== GIT DIFF (Plugin-Datei) ==="
-          git diff "$PLUGIN_FILE" || echo "Keine Änderungen erkannt im Plugin-File!"
-          
+          RETRIES=5
+          for i in $(seq 1 $RETRIES); do
+          echo "Attempt $i to fetch, reset, rebase and push..."
+        
+          git fetch origin master
+          git reset --hard origin/master
+        
+          if git rebase origin/master; then
           git add "$PLUGIN_FILE"
           
-          echo "=== GIT DIFF --staged (nach git add) ==="
-          git diff --staged "$PLUGIN_FILE" || echo "Keine gestagten Änderungen!"
-          
-          echo "=== VERSUCH COMMIT ==="
-          if git commit -m "chore: Update plugin version to $TAG [skip ci]"; then
-          echo "Commit erfolgreich!"
+          if git diff --quiet; then
+          echo "No changes to commit"
           else
-          echo "Kein Commit gemacht (vermutlich keine Änderungen)!"
+          git commit -m "chore: Update plugin version to $TAG [skip ci]"
           fi
           
-          echo "=== PUSHEN ==="
-          if git push origin HEAD:master; then
-          echo "Push erfolgreich!"
+          if git push origin master; then
+          echo "Push successful!"
+          break
           else
-          echo "Push fehlgeschlagen!"
-          git remote -v
-          git branch -a
+          echo "Push rejected, retrying after delay..."
+          sleep 5
           fi
+          else
+          echo "Rebase failed, aborting and retrying after delay..."
+          git rebase --abort || true
+          sleep 5
+          fi
+          done
+
 
