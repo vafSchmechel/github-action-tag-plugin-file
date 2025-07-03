@@ -7,3 +7,9 @@
  */
 
 defined('ABSPATH') or die('No script kiddies please!');
+
+
+
+/**
+ * Aktiviert das Plugin.
+ */
