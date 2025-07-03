@@ -20,7 +20,7 @@ jobs:
           TAG=${GITHUB_REF##*/}
           FILE="my-plugin.php"
           echo "Updating $FILE with version $TAG"
-          sed -i "s/^\(\s*\*\s*Version:\s*\).*/\1$TAG/" "$FILE"
+          sed -i "s/^.*Version:.*$/ * Version: $TAG/" my-plugin.php
 
       - name: Commit and push changes
         run: |
