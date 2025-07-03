@@ -60,3 +60,21 @@ jobs:
           git diff --quiet || git commit -m "chore: Update plugin version to $TAG [skip ci]"
 
           git push origin HEAD:master
+      - name: Debug version update
+        run: |
+          TAG=${GITHUB_REF##*/}
+          ESCAPED_TAG=$(printf '%s\n' "$TAG" | sed 's/[\/&]/\\&/g')
+      
+          echo "GITHUB_REF = $GITHUB_REF"
+          echo "TAG = '$TAG'"
+          echo "ESCAPED_TAG = '$ESCAPED_TAG'"
+      
+          echo "Before replacement:"
+          head -n 10 "$PLUGIN_FILE"
+      
+          sed -i "s/^\s*Version:\s*.*/Version: $ESCAPED_TAG/" "$PLUGIN_FILE"
+      
+          echo "After replacement:"
+          head -n 10 "$PLUGIN_FILE"
+
+        
