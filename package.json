@@ -1,0 +1,8 @@
+{
+  "name": "my-wp-plugin",
+  "version": "0.0.1",
+  "scripts": {
+    "set-version": "node set-version.js"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,31 @@
+name: Update Plugin Version on Tag Push
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Set plugin version in PHP file
+        run: |
+          TAG=${GITHUB_REF##*/}
+          FILE="my-plugin.php"
+          echo "Updating $FILE with version $TAG"
+          sed -i "s/^\(\s*\*\s*Version:\s*\).*/\1$TAG/" "$FILE"
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add my-plugin.php
+          git commit -m "chore: Update plugin version to $TAG [skip ci]" || echo "No changes to commit"
+          git push
