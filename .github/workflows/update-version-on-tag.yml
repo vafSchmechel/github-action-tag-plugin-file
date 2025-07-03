@@ -10,22 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository with token
+      - name: Checkout master branch
         uses: actions/checkout@v3
         with:
+          ref: master
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Read plugin file from composer.json "name" field
+      - name: Read plugin file path from composer.json
         run: |
           NAME=$(jq -r '.name' composer.json)
-          echo "Name from composer.json: $NAME"
           PLUGIN_NAME=${NAME#*/}
           PLUGIN_FILE="$PLUGIN_NAME.php"
-          echo "Derived plugin file name: $PLUGIN_FILE"
           echo "PLUGIN_FILE=$PLUGIN_FILE" >> $GITHUB_ENV
 
-      - name: Set plugin version in PHP file
+      - name: Update plugin version in PHP file
         run: |
           TAG=${GITHUB_REF##*/}
           ESCAPED_TAG=$(printf '%s\n' "$TAG" | sed 's/[\/&]/\\&/g')
@@ -38,41 +37,31 @@ jobs:
           echo "After replacement:"
           head -n 10 "$PLUGIN_FILE"
 
-      - name: Commit and push changes with reset + rebase + retry
+      - name: Commit and push changes with retry
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git checkout master
-          
+
           RETRIES=5
           for i in $(seq 1 $RETRIES); do
-          echo "Attempt $i to fetch, reset, rebase and push..."
-        
-          git fetch origin master
-          git reset --hard origin/master
-        
-          if git rebase origin/master; then
-          git add "$PLUGIN_FILE"
-          
-          if git diff --quiet; then
-          echo "No changes to commit"
-          else
-          git commit -m "chore: Update plugin version to $TAG [skip ci]"
-          fi
-          
-          if git push origin master; then
-          echo "Push successful!"
-          break
-          else
-          echo "Push rejected, retrying after delay..."
-          sleep 5
-          fi
-          else
-          echo "Rebase failed, aborting and retrying after delay..."
-          git rebase --abort || true
-          sleep 5
-          fi
+            echo "Attempt $i to push..."
+
+            git fetch origin master
+            git reset --hard origin/master
+
+            git add "$PLUGIN_FILE"
+
+            if git diff --cached --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "chore: Update plugin version to $TAG [skip ci]"
+            fi
+
+            if git push origin master; then
+              echo "Push successful!"
+              break
+            else
+              echo "Push failed, retrying after 5 seconds..."
+              sleep 5
+            fi
           done
-
-
