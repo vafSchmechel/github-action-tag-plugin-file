@@ -16,13 +16,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: Read plugin file from composer.json and trim path
+      - name: Read plugin file from composer.json "name" field
         run: |
-          PLUGIN_PATH=$(jq -r '.extra["plugin-file"]' composer.json)
-          echo "Original plugin path: $PLUGIN_PATH"
-          PLUGIN_FILE=$(basename "$PLUGIN_PATH")
-          echo "Trimmed plugin file name: $PLUGIN_FILE"
+          NAME=$(jq -r '.name' composer.json)
+          echo "Name from composer.json: $NAME"
+          PLUGIN_NAME=${NAME#*/}
+          PLUGIN_FILE="$PLUGIN_NAME.php"
+          echo "Derived plugin file name: $PLUGIN_FILE"
           echo "PLUGIN_FILE=$PLUGIN_FILE" >> $GITHUB_ENV
+      
 
       - name: Set plugin version in PHP file
         run: |
