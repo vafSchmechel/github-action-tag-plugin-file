@@ -10,40 +10,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository with token
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
+      - name: Read plugin file from composer.json and trim path
+        run: |
+          PLUGIN_PATH=$(jq -r '.extra["plugin-file"]' composer.json)
+          echo "Original plugin path: $PLUGIN_PATH"
+          PLUGIN_FILE=$(basename "$PLUGIN_PATH")
+          echo "Trimmed plugin file name: $PLUGIN_FILE"
+          echo "PLUGIN_FILE=$PLUGIN_FILE" >> $GITHUB_ENV
+
       - name: Set plugin version in PHP file
         run: |
           TAG=${GITHUB_REF##*/}
-          echo "Git Tag: '$TAG'"
-
           ESCAPED_TAG=$(printf '%s\n' "$TAG" | sed 's/[\/&]/\\&/g')
-          echo "Escaped Tag: '$ESCAPED_TAG'"
-
-          FILE="my-plugin.php"
 
           echo "Before replacement:"
-          head -n 10 "$FILE"
+          head -n 10 "$PLUGIN_FILE"
 
-          sed -i "s/^\(\s*\*\s*[Vv]ersion:\s*\).*/\1$ESCAPED_TAG/" "$FILE"
+          sed -i "s/^\(\s*\*\s*[Vv]ersion:\s*\).*/\1$ESCAPED_TAG/" "$PLUGIN_FILE"
 
           echo "After replacement:"
-          head -n 10 "$FILE"
+          head -n 10 "$PLUGIN_FILE"
 
-      - name: Commit and push changes
+      - name: Commit and push changes with rebase and retry
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add my-plugin.php
-          
-          git commit -m "chore: Update plugin version to $TAG [skip ci]" || echo "No changes to commit"
-          
-          git pull --rebase origin master
-          
-          git push origin HEAD:master
-      
+
+          git add "$PLUGIN_FILE"
+
+          git diff --quiet || git commit -m "chore: Update plugin version to $TAG [skip ci]"
+
+          RETRIES=3
+          for i in $(seq 1 $RETRIES); do
+            echo "Attempt $i to rebase and push..."
+            git fetch origin master
+            if git rebase origin/master; then
+              git push origin HEAD:master && break
+            else
+              echo "Rebase failed, aborting rebase and retrying..."
+              git rebase --abort
+              sleep 5
+            fi
+          done
