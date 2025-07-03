@@ -38,15 +38,16 @@ jobs:
           echo "After replacement:"
           head -n 10 "$PLUGIN_FILE"
 
-      - name: Commit and push changes with rebase and retry
+      - name: Commit and push changes with reset + rebase + retry
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           RETRIES=3
           for i in $(seq 1 $RETRIES); do
-            echo "Attempt $i to fetch, rebase and push..."
+            echo "Attempt $i to fetch, reset, rebase and push..."
             git fetch origin master
+            git reset --hard
             if git rebase origin/master; then
               break
             else
@@ -60,21 +61,3 @@ jobs:
           git diff --quiet || git commit -m "chore: Update plugin version to $TAG [skip ci]"
 
           git push origin HEAD:master
-      - name: Debug version update
-        run: |
-          TAG=${GITHUB_REF##*/}
-          ESCAPED_TAG=$(printf '%s\n' "$TAG" | sed 's/[\/&]/\\&/g')
-      
-          echo "GITHUB_REF = $GITHUB_REF"
-          echo "TAG = '$TAG'"
-          echo "ESCAPED_TAG = '$ESCAPED_TAG'"
-      
-          echo "Before replacement:"
-          head -n 10 "$PLUGIN_FILE"
-      
-          sed -i "s/^\s*Version:\s*.*/Version: $ESCAPED_TAG/" "$PLUGIN_FILE"
-      
-          echo "After replacement:"
-          head -n 10 "$PLUGIN_FILE"
-
-        
