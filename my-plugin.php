@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mein WP Plugin
  * Description: Ein Test-Plugin
- * Version: 1.0.35
+ * Version: 1.0.36
  * Author: ChatGPT
  */
 
