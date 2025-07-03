@@ -24,7 +24,6 @@ jobs:
           PLUGIN_FILE="$PLUGIN_NAME.php"
           echo "Derived plugin file name: $PLUGIN_FILE"
           echo "PLUGIN_FILE=$PLUGIN_FILE" >> $GITHUB_ENV
-      
 
       - name: Set plugin version in PHP file
         run: |
@@ -44,19 +43,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add "$PLUGIN_FILE"
-
-          git diff --quiet || git commit -m "chore: Update plugin version to $TAG [skip ci]"
-
           RETRIES=3
           for i in $(seq 1 $RETRIES); do
-            echo "Attempt $i to rebase and push..."
+            echo "Attempt $i to fetch, rebase and push..."
             git fetch origin master
             if git rebase origin/master; then
-              git push origin HEAD:master && break
+              break
             else
-              echo "Rebase failed, aborting rebase and retrying..."
-              git rebase --abort
+              echo "Rebase failed, aborting and retrying..."
+              git rebase --abort || true
               sleep 5
             fi
           done
+
+          git add "$PLUGIN_FILE"
+          git diff --quiet || git commit -m "chore: Update plugin version to $TAG [skip ci]"
+
+          git push origin HEAD:master
