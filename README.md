@@ -156,8 +156,7 @@ jobs:
           git tag -f "$TAG"
           git push --force origin "$TAG"
 ```
-
+NEXT STEPS:
+- Bypass protected branch rules if necessary (example: xlib).
+- CachedContainer (example: vaf-wp-framework)
 ---
-
-Falls du die Doku als PDF möchtest oder weitere Erklärungen brauchst, melde dich gern!  
-Viel Erfolg mit deinem Workflow! 🚀
